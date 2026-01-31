@@ -1,0 +1,9 @@
+id: sql_top_customers
+language: sql
+entrypoint: solution.sql
+time_limit_ms: 2000
+memory_limit_mb: 256
+max_output_kb: 64
+scoring:
+  public: 50
+  hidden: 50

@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"   # optional: lets you test from host
+    volumes:
+      - ollama_data:/root/.ollama
+
+  api:
+    build:
+      context: ./api
+    image: edgelab-api:0.1
+    ports:
+      - "8000:8000"
+    environment:
+      - EDGELAB_DB_URL=sqlite:////data/edgelab.sqlite
+      - EDGELAB_ASSIGNMENTS_DIR=/assignments
+    volumes:
+      - ./assignments:/assignments:ro
+      - edgelab_data:/data
+    depends_on:
+      - sandbox-python
+      - sandbox-java
+      - sandbox-sql
+
+  runner:
+    build:
+      context: ./runner
+    image: edgelab-runner:0.1
+    environment:
+      - EDGELAB_DB_URL=sqlite:////data/edgelab.sqlite
+      - EDGELAB_ASSIGNMENTS_DIR=/assignments
+      - EDGELAB_POLL_INTERVAL_SEC=1
+    volumes:
+      - ./assignments:/assignments:ro # <host_path> : <container_path> : <mode>
+      - edgelab_data:/data # <named_volume> : <container_path>
+      - /var/run/docker.sock:/var/run/docker.sock
+    # (ABOVE) Mounting docker.sock gives the runner full control over Docker on the host.
+    depends_on:
+      - api
+      - sandbox-python
+      - sandbox-java
+      - sandbox-sql
+
+  # These services exist mainly to ensure sandbox images are built
+  sandbox-python:
+    build:
+      context: ./sandbox-images/python-runner
+    image: edgelab-sandbox-python:0.1
+    command: ["sh", "-c", "echo sandbox-python built"]
+    restart: "no"
+
+  sandbox-java:
+    build:
+      context: ./sandbox-images/java-runner
+    image: edgelab-sandbox-java:0.1
+    command: ["sh", "-c", "echo sandbox-java built"]
+    restart: "no"
+
+  sandbox-sql:
+    build:
+      context: ./sandbox-images/sql-runner
+    image: edgelab-sandbox-sql:0.1
+    command: ["sh", "-c", "echo sandbox-sql built"]
+    restart: "no"
+
+volumes:
+  edgelab_data:
+  ollama_data:

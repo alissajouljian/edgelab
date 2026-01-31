@@ -1,0 +1,9 @@
+id: py_sum_two
+language: python
+entrypoint: solution.py
+time_limit_ms: 1500
+memory_limit_mb: 256
+max_output_kb: 64
+scoring:
+  public: 50
+  hidden: 50
